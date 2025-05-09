@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Умная теплица</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #38b2ac 0%, #319795 50%, #2c7a7b 100%);
+        }
+        .sensor-card {
+            transition: all 0.3s ease;
+        }
+        .sensor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .plant-option {
+            transition: all 0.2s ease;
+        }
+        .plant-option:hover {
+            transform: scale(1.05);
+        }
+        .plant-option.selected {
+            border-color: #38b2ac;
+            box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.5);
+        }
+        .shelf-option {
+            transition: all 0.2s ease;
+        }
+        .shelf-option:hover {
+            transform: scale(1.05);
+        }
+        .shelf-option.selected {
+            border-color: #38b2ac;
+            box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.5);
+        }
+        .growth-option {
+            transition: all 0.2s ease;
+        }
+        .growth-option:hover {
+            transform: scale(1.05);
+        }
+        .growth-option.selected {
+            border-color: #38b2ac;
+            box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.5);
+        }
+        .light-on {
+            box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.7);
+        }
+        .connection-status {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .connected {
+            animation: none;
+        }
+        .progress-bar {
+            height: 10px;
+            border-radius: 5px;
+            background-color: #e5e7eb;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.5s ease;
+        }
+        .watering-active {
+            animation: wateringPulse 1.5s infinite;
+        }
+        @keyframes wateringPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        .custom-plant-form {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .custom-plant-form.active {
+            max-height: 500px;
+            transition: max-height 0.5s ease-in;
+        }
+        .shelf-info-card {
+            transition: all 0.3s ease;
+        }
+        .shelf-info-card:hover {
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="gradient-bg text-white py-6 px-4 shadow-lg">
+        <div class="container mx-auto">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold">Умная теплица</h1>
+                    <p class="opacity-90">Контроль и управление вашей теплицей</p>
+                </div>
+                <div id="connectionStatus" class="connection-status flex items-center bg-red-500 px-3 py-1 rounded-full">
+                    <i class="fas fa-plug mr-2"></i>
+                    <span>Нет соединения</span>
+                </div>
+            </div>
+            
+            <!-- Информация о полках -->
+            <div id="shelvesHeaderInfo" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <!-- Полка 1 -->
+                <div class="shelf-info-card bg-white bg-opacity-20 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-layer-group text-xl text-blue-300 mr-2"></i>
+                        <h3 class="font-medium">Полка 1</h3>
+                    </div>
+                    <div id="shelf1Info" class="text-sm">
+                        <p class="text-white text-opacity-80">Нет растения</p>
+                    </div>
+                </div>
+                
+                <!-- Полка 2 -->
+                <div class="shelf-info-card bg-white bg-opacity-20 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-layer-group text-xl text-green-300 mr-2"></i>
+                        <h3 class="font-medium">Полка 2</h3>
+                    </div>
+                    <div id="shelf2Info" class="text-sm">
+                        <p class="text-white text-opacity-80">Нет растения</p>
+                    </div>
+                </div>
+                
+                <!-- Полка 3 -->
+                <div class="shelf-info-card bg-white bg-opacity-20 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-layer-group text-xl text-yellow-300 mr-2"></i>
+                        <h3 class="font-medium">Полка 3</h3>
+                    </div>
+                    <div id="shelf3Info" class="text-sm">
+                        <p class="text-white text-opacity-80">Нет растения</p>
+                    </div>
+                </div>
+                
+                <!-- Полка 4 -->
+                <div class="shelf-info-card bg-white bg-opacity-20 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <i class="fas fa-layer-group text-xl text-red-300 mr-2"></i>
+                        <h3 class="font-medium">Полка 4</h3>
+                    </div>
+                    <div id="shelf4Info" class="text-sm">
+                        <p class="text-white text-opacity-80">Нет растения</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Температура -->
+            <div class="sensor-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-temperature-high text-blue-500 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Температура</h3>
+                        <p class="text-gray-500">Датчик DHT22</p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <span id="temperatureValue" class="text-4xl font-bold text-gray-800">--</span>
+                        <span class="text-gray-500 text-xl">°C</span>
+                    </div>
+                    <div id="tempStatus" class="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+                        обновление...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Влажность почвы -->
+            <div class="sensor-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-tint text-green-500 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Влажность почвы</h3>
+                        <p class="text-gray-500">Датчик влажности</p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <span id="soilMoistureValue" class="text-4xl font-bold text-gray-800">--</span>
+                        <span class="text-gray-500 text-xl">%</span>
+                    </div>
+                    <div id="soilMoistureStatus" class="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+                        обновление...
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="progress-bar">
+                        <div id="soilMoistureBar" class="progress-fill bg-green-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Уровень воды в баке -->
+            <div class="sensor-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-indigo-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-water text-indigo-500 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Бак для воды</h3>
+                        <p class="text-gray-500">Уровень наполнения</p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <span id="waterTankValue" class="text-4xl font-bold text-gray-800">--</span>
+                        <span class="text-gray-500 text-xl">л</span>
+                    </div>
+                    <div id="waterTankStatus" class="text-sm px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+                        обновление...
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <div class="progress-bar">
+                        <div id="waterTankBar" class="progress-fill bg-indigo-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Освещение -->
+            <div class="sensor-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-lightbulb text-yellow-500 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Освещение</h3>
+                        <p class="text-gray-500">Состояние лампы</p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <div id="lightBulb" class="text-4xl text-gray-300">
+                            <i class="far fa-lightbulb"></i>
+                        </div>
+                    </div>
+                    <button id="toggleLight" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700 transition">
+                        Переключить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Время и дата -->
+            <div class="sensor-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-purple-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-clock text-purple-500 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Время</h3>
+                        <p class="text-gray-500">Текущее время теплицы</p>
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <span id="currentTime" class="text-3xl font-bold text-gray-800">--:--:--</span>
+                    <span id="currentDate" class="text-gray-500">-- --- ----</span>
+                </div>
+            </div>
+
+            <!-- Система полива -->
+            <div class="sensor-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-100 p-3 rounded-full mr-4">
+                        <i class="fas fa-shower text-blue-500 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800">Система полива</h3>
+                        <p class="text-gray-500">Управление орошением</p>
+                    </div>
+                </div>
+                
+                <!-- Выбор полки для полива -->
+                <div class="mb-3">
+                    <label class="block text-gray-700 mb-1">Выберите полку:</label>
+                    <div class="grid grid-cols-5 gap-1">
+                        <div class="watering-shelf-option border border-gray-200 rounded p-1 text-center cursor-pointer" data-shelf="1">
+                            <i class="fas fa-layer-group text-xs text-blue-500"></i>
+                            <span class="text-xs">1</span>
+                        </div>
+                        <div class="watering-shelf-option border border-gray-200 rounded p-1 text-center cursor-pointer" data-shelf="2">
+                            <i class="fas fa-layer-group text-xs text-green-500"></i>
+                            <span class="text-xs">2</span>
+                        </div>
+                        <div class="watering-shelf-option border border-gray-200 rounded p-1 text-center cursor-pointer" data-shelf="3">
+                            <i class="fas fa-layer-group text-xs text-yellow-500"></i>
+                            <span class="text-xs">3</span>
+                        </div>
+                        <div class="watering-shelf-option border border-gray-200 rounded p-1 text-center cursor-pointer" data-shelf="4">
+                            <i class="fas fa-layer-group text-xs text-red-500"></i>
+                            <span class="text-xs">4</span>
+                        </div>
+                        <div class="watering-shelf-option border border-gray-200 rounded p-1 text-center cursor-pointer bg-blue-100" data-shelf="all">
+                            <i class="fas fa-layer-group text-xs text-gray-700"></i>
+                            <span class="text-xs">Все</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Выбор времени полива -->
+                <div class="mb-3">
+                    <label class="block text-gray-700 mb-1">Время полива:</label>
+                    <select id="wateringTimeSelect" class="w-full px-2 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm">
+                        <option value="manual">Ручной режим</option>
+                        <option value="30">30 секунд</option>
+                        <option value="60">1 минута</option>
+                        <option value="300">5 минут</option>
+                        <option value="600">10 минут</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col space-y-3">
+                    <button id="startWatering" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition flex items-center justify-center">
+                        <i class="fas fa-shower mr-2"></i>
+                        Запустить полив
+                    </button>
+                    <button id="startSpraying" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition flex items-center justify-center">
+                        <i class="fas fa-spray-can mr-2"></i>
+                        Запустить орошение
+                    </button>
+                    <div id="wateringStatus" class="text-center py-2 hidden">
+                        <div class="watering-active inline-flex items-center text-blue-600">
+                            <i class="fas fa-shower mr-2"></i>
+                            <span id="wateringStatusText">Полив активен</span>
+                            <span id="wateringShelfInfo" class="ml-2 text-sm"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Таймер и выбор растений -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Таймер полива -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-stopwatch mr-3 text-green-500"></i>
+                    Таймер полива
+                </h2>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Интервал полива (часы)</label>
+                    <input id="wateringInterval" type="number" min="1" max="24" value="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 mb-2">Длительность полива (минуты)</label>
+                    <input id="wateringDuration" type="number" min="1" max="60" value="5" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200">
+                </div>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="text-gray-600">Следующий полив:</span>
+                        <span id="nextWatering" class="ml-2 font-medium">--:--</span>
+                    </div>
+                    <button id="startWateringTimer" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition">
+                        Запустить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Выбор растений -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-seedling mr-3 text-green-500"></i>
+                    Выбор растений
+                </h2>
+                <p class="text-gray-600 mb-4">Выберите растения, которые вы посадили:</p>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                    <div class="plant-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" data-plant="tomato">
+                        <i class="fas fa-apple-alt text-3xl text-red-500 mb-2"></i>
+                        <p>Помидоры</p>
+                    </div>
+                    <div class="plant-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" data-plant="cucumber">
+                        <i class="fas fa-leaf text-3xl text-green-500 mb-2"></i>
+                        <p>Огурцы</p>
+                    </div>
+                    <div class="plant-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" data-plant="pepper">
+                        <i class="fas fa-pepper-hot text-3xl text-yellow-500 mb-2"></i>
+                        <p>Перцы</p>
+                    </div>
+                    <div class="plant-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" data-plant="salad">
+                        <i class="fas fa-seedling text-3xl text-blue-500 mb-2"></i>
+                        <p>Салат</p>
+                    </div>
+                    <div class="plant-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" data-plant="herbs">
+                        <i class="fas fa-spa text-3xl text-purple-500 mb-2"></i>
+                        <p>Зелень</p>
+                    </div>
+                    <div class="plant-option border-2 border-gray-200 rounded-lg p-3 text-center cursor-pointer" data-plant="other">
+                        <i class="fas fa-question text-3xl text-gray-500 mb-2"></i>
+                        <p>Другое</p>
+                    </div>
+                </div>
+                
+                <!-- Выбор полки -->
+                <div id="shelfSelection" class="mb-4 hidden">
+                    <p class="text-gray-600 mb-2">Выберите полку для растения:</p>
+                    <div class="grid grid-cols-5 gap-2">
+                        <div class="shelf-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer" data-shelf="1">
+                            <i class="fas fa-layer-group text-xl text-blue-500 mb-1"></i>
+                            <p>Полка 1</p>
+                        </div>
+                        <div class="shelf-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer" data-shelf="2">
+                            <i class="fas fa-layer-group text-xl text-green-500 mb-1"></i>
+                            <p>Полка 2</p>
+                        </div>
+                        <div class="shelf-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer" data-shelf="3">
+                            <i class="fas fa-layer-group text-xl text-yellow-500 mb-1"></i>
+                            <p>Полка 3</p>
+                        </div>
+                        <div class="shelf-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer" data-shelf="4">
+                            <i class="fas fa-layer-group text-xl text-red-500 mb-1"></i>
+                            <p>Полка 4</p>
+                        </div>
+                        <div class="shelf-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer bg-blue-50" data-shelf="all">
+                            <i class="fas fa-layer-group text-xl text-gray-700 mb-1"></i>
+                            <p>Все полки</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Выбор стадии роста -->
+                <div id="growthSelection" class="mb-4 hidden">
+                    <p class="text-gray-600 mb-2">Выберите стадию роста растения:</p>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="growth-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer" data-growth="seedling">
+                            <i class="fas fa-seedling text-xl text-green-300 mb-1"></i>
+                            <p>Рассада</p>
+                        </div>
+                        <div class="growth-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer" data-growth="vegetative">
+                            <i class="fas fa-leaf text-xl text-green-500 mb-1"></i>
+                            <p>Вегетация</p>
+                        </div>
+                        <div class="growth-option border-2 border-gray-200 rounded-lg p-2 text-center cursor-pointer" data-growth="fruiting">
+                            <i class="fas fa-apple-alt text-xl text-red-500 mb-1"></i>
+                            <p>Плодоношение</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Форма для настройки пользовательского растения -->
+                <div id="customPlantForm" class="custom-plant-form">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Название растения</label>
+                        <input id="customPlantName" type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Оптимальная температура (°C)</label>
+                        <input id="customPlantTemp" type="number" min="10" max="40" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Интервал полива (дни)</label>
+                        <input id="customPlantWatering" type="number" min="1" max="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2">Длительность освещения (часов в день)</label>
+                        <input id="customPlantLight" type="number" min="6" max="18" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-200">
+                    </div>
+                    <button id="saveCustomPlant" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition">
+                        Сохранить растение
+                    </button>
+                </div>
+                
+                <!-- Информация о выбранном растении -->
+                <div id="selectedPlantInfo" class="mt-4 p-3 bg-green-50 rounded-lg hidden">
+                    <h3 class="font-medium text-green-800">Полка <span id="selectedShelf">1</span>: <span id="selectedPlantName">Помидоры</span> (<span id="selectedGrowth">Рассада</span>)</h3>
+                    <div class="grid grid-cols-2 gap-2 mt-2">
+                        <div class="bg-white p-2 rounded">
+                            <i class="fas fa-temperature-high text-blue-500 mr-1"></i>
+                            <span id="plantTemp">22-26°C</span>
+                        </div>
+                        <div class="bg-white p-2 rounded">
+                            <i class="fas fa-tint text-blue-300 mr-1"></i>
+                            <span id="plantWatering">Каждые 3 дня</span>
+                        </div>
+                        <div class="bg-white p-2 rounded">
+                            <i class="fas fa-lightbulb text-yellow-500 mr-1"></i>
+                            <span id="plantLight">14 часов</span>
+                        </div>
+                        <div class="bg-white p-2 rounded">
+                            <i class="fas fa-clock text-purple-500 mr-1"></i>
+                            <span id="plantNextWatering">Завтра 10:00</span>
+                        </div>
+                    </div>
+                    <p id="plantAdvice" class="text-sm text-green-700 mt-2">Оптимальная температура: 22-26°C, полив каждые 3 дня. Требуется много света.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- График температуры и влажности -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-chart-line mr-3 text-blue-500"></i>
+                График температуры и влажности
+            </h2>
+            <div class="h-64">
+                <canvas id="tempChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Управление ESP32 -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-microchip mr-3 text-purple-500"></i>
+                Управление ESP32
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-gray-700 mb-2">IP адрес ESP32</label>
+            <input id="espIp" type="text" placeholder="192.168.1.100" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200">
+                </div>
+                <div class="flex items-end">
+                    <button id="connectBtn" class="px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition">
+                        Подключиться
+                    </button>
+                    <button id="disconnectBtn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition ml-2 hidden">
+                        Отключиться
+                    </button>
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="block text-gray-700 mb-2">Журнал событий</label>
+                <div id="eventLog" class="h-32 overflow-y-auto bg-gray-50 p-3 rounded-lg text-sm text-gray-700 font-mono">
+                    <div>> Готов к подключению к ESP32...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Имитация соединения с ESP32
+        let isConnected = false;
+        let lightState = false;
+        let selectedPlant = null;
+        let selectedShelf = null;
+        let selectedGrowth = null;
+        let tempChart = null;
+        let wateringTimer = null;
+        let nextWateringTime = null;
+        let wateringActive = false;
+        let sprayingActive = false;
+        let waterTankLevel = 50; // Начальный уровень воды в баке (литры)
+        const waterTankCapacity = 100; // Объем бака (литры)
+        let selectedWateringShelf = "all"; // Выбранная полка для полива
+        let wateringTimeout = null; // Таймер полива
+        
+        // Растения и их параметры
+        const plants = {
+            tomato: {
+                name: "Помидоры",
+                seedling: {
+                    temp: "22-24°C",
+                    watering: "Каждые 2 дня",
+                    light: "14 часов",
+                    advice: "Рассада помидоров требует стабильной температуры и умеренного полива. Освещение должно быть интенсивным."
+                },
+                vegetative: {
+                    temp: "24-26°C",
+                    watering: "Каждые 3 дня",
+                    light: "16 часов",
+                    advice: "В вегетативной стадии помидоры нуждаются в обильном поливе и хорошем освещении."
+                },
+                fruiting: {
+                    temp: "22-24°C",
+                    watering: "Каждые 4 дня",
+                    light: "12 часов",
+                    advice: "В период плодоношения уменьшите полив и обеспечьте перепад температур день/ночь."
+                }
+            },
+            cucumber: {
+                name: "Огурцы",
+                seedling: {
+                    temp: "24-26°C",
+                    watering: "Каждые 2 дня",
+                    light: "12 часов",
+                    advice: "Рассада огурцов любит тепло и влажность. Избегайте пересыхания почвы."
+                },
+                vegetative: {
+                    temp: "26-28°C",
+                    watering: "Кажде 2 дня",
+                    light: "14 часов",
+                    advice: "Огурцы в вегетативной стадии требуют высокой влажности воздуха и почвы."
+                },
+                fruiting: {
+                    temp: "24-26°C",
+                    watering: "Каждые 1-2 дня",
+                    light: "12 часов",
+                    advice: "Во время плодоношения полив должен быть частым, но не чрезмерным."
+                }
+            },
+            pepper: {
+                name: "Перцы",
+                seedling: {
+                    temp: "24-26°C",
+                    watering: "Каждые 3 дня",
+                    light: "14 часов",
+                    advice: "Рассада перцев растет медленно, не переувлажняйте почву."
+                },
+                vegetative: {
+                    temp: "26-28°C",
+                    watering: "Каждые 3-4 дня",
+                    light: "16 часов",
+                    advice: "Перцы любят тепло и хорошее освещение. Полив умеренный."
+                },
+                fruiting: {
+                    temp: "24-26°C",
+                    watering: "Каждые 4-5 дня",
+                    light: "12 часов",
+                    advice: "В период плодоношения уменьшите полив для лучшего созревания плодов."
+                }
+            },
+            salad: {
+                name: "Салат",
+                seedling: {
+                    temp: "18-20°C",
+                    watering: "Каждые 2 дня",
+                    light: "10 часов",
+                    advice: "Рассада салата не любит жару. Полив регулярный, но не обильный."
+                },
+                vegetative: {
+                    temp: "16-20°C",
+                    watering: "Каждые 2-3 дня",
+                    light: "12 часов",
+                    advice: "Салат быстро растет при умеренной температуре и хорошем освещении."
+                },
+                fruiting: {
+                    temp: "15-18°C",
+                    watering: "Каждые 3 дня",
+                    light: "10 часов",
+                    advice: "Для предотвращения стрелкования уменьшите температуру и освещение."
+                }
+            },
+            herbs: {
+                name: "Зелень",
+                seedling: {
+                    temp: "18-22°C",
+                    watering: "Каждые 2 дня",
+                    light: "12 часов",
+                    advice: "Рассада зелени требует умеренного полив и хорошего освещения."
+                },
+                vegetative: {
+                    temp: "20-22°C",
+                    watering: "Каждые 2-3 дня",
+                    light: "14 часов",
+                    advice: "Зелень быстро растет при стабильной температуре и умеренном поливе."
+                },
+                fruiting: {
+                    temp: "18-20°C",
+                    watering: "Каждые 3 дня",
+                    light: "12 часов",
+                    advice: "Для лучшего вкуса уменьшите температуру и увеличьте перерыв между поливами."
+                }
+            },
+            other: {
+                name: "Другое",
+                seedling: {
+                    temp: "20-24°C",
+                    watering: "Каждые 3 дня",
+                    light: "12 часов",
+                    advice: "Установите индивидуальные параметры для вашего растения."
+                },
+                vegetative: {
+                    temp: "22-26°C",
+                    watering: "Каждые 3-4 дня",
+                    light: "14 часов",
+                    advice: "Установите индивидуальные параметры для вашего растения."
+                },
+                fruiting: {
+                    temp: "20-24°C",
+                    watering: "Каждые 4-5 дня",
+                    light: "12 часов",
+                    advice: "Установите индивидуальные параметры для вашего растения."
+                }
+            }
+        };
+
+        // Пользовательские растения
+        let customPlants = {};
+        
+        // Полки с растениями
+        let shelves = {
+            1: null,
+            2: null,
+            3: null,
+            4: null
+        };
+
+        // Инициализация графика
+        function initChart() {
+            const ctx = document.getElementById('tempChart').getContext('2d');
+            tempChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(24).fill().map((_, i) => `${i}:00`),
+                    datasets: [
+                        {
+                            label: 'Температура (°C)',
+                            data: Array(24).fill(null),
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            tension: 0.1,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Влажность почвы (%)',
+                            data: Array(24).fill(null),
+                            borderColor: 'rgb(54, 162, 235)',
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            tension: 0.1,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Температура (°C)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Влажность почвы (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Обновление данных графика
+        function updateChart(temp, moisture) {
+            if (!tempChart) return;
+            
+            const now = new Date();
+            const hour = now.getHours();
+            
+            // Сдвигаем данные на 1 час
+            if (hour === 0) {
+                tempChart.data.datasets[0].data = Array(24).fill(null);
+                tempChart.data.datasets[1].data = Array(24).fill(null);
+            }
+            
+            tempChart.data.datasets[0].data[hour] = temp;
+            tempChart.data.datasets[1].data[hour] = moisture;
+            tempChart.update();
+        }
+
+        // Добавление сообщения в журнал
+        function addLogMessage(message) {
+            const log = document.getElementById('eventLog');
+            log.innerHTML += `<div>> ${new Date().toLocaleTimeString()}: ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Подключение к ESP32
+        function connectToESP() {
+            const ip = document.getElementById('espIp').value.trim();
+            
+            if (!ip) {
+                addLogMessage("Ошибка: Введите IP адрес ESP32");
+                return;
+            }
+            
+            addLogMessage(`Попытка подключения к ${ip}...`);
+            
+            // Имитация задержки подключения
+            setTimeout(() => {
+                isConnected = true;
+                document.getElementById('connectionStatus').classList.remove('connection-status', 'bg-red-500');
+                document.getElementById('connectionStatus').classList.add('connected', 'bg-green-500');
+                document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-plug mr-2"></i><span>Соединение установлено</span>';
+                
+                document.getElementById('connectBtn').classList.add('hidden');
+                document.getElementById('disconnectBtn').classList.remove('hidden');
+                
+                addLogMessage("Соединение с ESP32 установлено. Начата передата данных...");
+                
+                // Запуск обновления данных
+                startDataUpdates();
+            }, 1500);
+        }
+
+        // Отключение от ESP32
+        function disconnectFromESP() {
+            isConnected = false;
+            document.getElementById('connectionStatus').classList.add('connection-status', 'bg-red-500');
+            document.getElementById('connectionStatus').classList.remove('connected', 'bg-green-500');
+            document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-plug mr-2"></i><span>Нет соединения</span>';
+            
+            document.getElementById('connectBtn').classList.remove('hidden');
+            document.getElementById('disconnectBtn').classList.add('hidden');
+            
+            addLogMessage("Соединение с ESP32 разорвано.");
+            
+            // Остановка обновления данных
+            stopDataUpdates();
+            
+            // Сброс значений
+            document.getElementById('temperatureValue').textContent = '--';
+            document.getElementById('tempStatus').textContent = 'нет данных';
+            document.getElementById('currentTime').textContent = '--:--:--';
+            document.getElementById('currentDate').textContent = '-- --- ----';
+            document.getElementById('soilMoistureValue').textContent = '--';
+            document.getElementById('soilMoistureStatus').textContent = 'нет данных';
+            document.getElementById('soilMoistureBar').style.width = '0%';
+            document.getElementById('waterTankValue').textContent = '--';
+            document.getElementById('waterTankStatus').textContent = 'нет данных';
+            document.getElementById('waterTankBar').style.width = '0%';
+            
+            if (lightState) {
+                toggleLight();
+            }
+            
+            if (wateringActive) {
+                stopWatering();
+            }
+            
+            if (sprayingActive) {
+                stopSpraying();
+            }
+        }
+
+        // Обновление данных с ESP32
+        function startDataUpdates() {
+            if (!isConnected) return;
+            
+            // Обновление времени
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Обновление температуры и влажности
+            updateTemperature();
+            updateSoilMoisture();
+            updateWaterTank();
+            
+            const tempInterval = setInterval(updateTemperature, 5000);
+            const moistureInterval = setInterval(updateSoilMoisture, 8000);
+            const waterTankInterval = setInterval(updateWaterTank, 10000);
+            
+            // Сохраняем интервалы для последующей очистки
+            window.espIntervals = {
+                tempInterval: tempInterval,
+                moistureInterval: moistureInterval,
+                waterTankInterval: waterTankInterval
+            };
+        }
+
+        // Остановка обновления данных
+        function stopDataUpdates() {
+            if (window.espIntervals) {
+                clearInterval(window.espIntervals.tempInterval);
+                clearInterval(window.espIntervals.moistureInterval);
+                clearInterval(window.espIntervals.waterTankInterval);
+                window.espIntervals = null;
+            }
+        }
+
+        // Обновление времени
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            const dateStr = now.toLocaleDateString('ru-RU', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+
+        // Обновление температуры
+        function updateTemperature() {
+            if (!isConnected) return;
+            
+            // Генерация случайной температуры в разумных пределах
+            const baseTemp = selectedPlant === 'salad' ? 18 : 24;
+            const temp = (baseTemp + Math.random() * 4 - 2).toFixed(1);
+            
+            document.getElementById('temperatureValue').textContent = temp;
+            
+            // Определение статуса температуры
+            let status = '';
+            let statusClass = '';
+            
+            if (temp < 15) {
+                status = 'слишком холодно';
+                statusClass = 'bg-blue-100 text-blue-800';
+            } else if (temp > 30) {
+                status = 'слишком жарко';
+                statusClass = 'bg-red-100 text-red-800';
+            } else {
+                status = 'норма';
+                statusClass = 'bg-green-100 text-green-800';
+            }
+            
+            const tempStatus = document.getElementById('tempStatus');
+            tempStatus.textContent = status;
+            tempStatus.className = 'text-sm px-3 py-1 rounded-full ' + statusClass;
+            
+            // Обновление графика
+            const moisture = parseFloat(document.getElementById('soilMoistureValue').textContent) || 50;
+            updateChart(temp, moisture);
+        }
+
+        // Обновление влажности почвы
+        function updateSoilMoisture() {
+            if (!isConnected) return;
+            
+            // Генерация случайной влажности
+            let moisture;
+            if (wateringActive) {
+                moisture = (70 + Math.random() * 20).toFixed(0); // Высокая влажность при поливе
+            } else if (sprayingActive) {
+                moisture = (60 + Math.random() * 15).toFixed(0); // Средняя влажность при орошении
+            } else {
+                moisture = (30 + Math.random() * 40).toFixed(0); // Нормальная случайная влажность
+            }
+            
+            document.getElementById('soilMoistureValue').textContent = moisture;
+            document.getElementById('soilMoistureBar').style.width = `${moisture}%`;
+            
+            // Определение статуса влажности
+            let status = '';
+            let statusClass = '';
+            
+            if (moisture < 30) {
+                status = 'слишком сухо';
+                statusClass = 'bg-red-100 text-red-800';
+            } else if (moisture > 70) {
+                status = 'слишком влажно';
+                statusClass = 'bg-blue-100 text-blue-800';
+            } else {
+                status = 'норма';
+                statusClass = 'bg-green-100 text-green-800';
+            }
+            
+            const moistureStatus = document.getElementById('soilMoistureStatus');
+            moistureStatus.textContent = status;
+            moistureStatus.className = 'text-sm px-3 py-1 rounded-full ' + statusClass;
+            
+            // Обновление графика
+            const temp = parseFloat(document.getElementById('temperatureValue').textContent) || 22;
+            updateChart(temp, moisture);
+        }
+
+        // Обновление уровня воды в баке
+        function updateWaterTank() {
+            if (!isConnected) return;
+            
+            // Уменьшаем уровень воды при активном поливе
+            if (wateringActive) {
+                waterTankLevel = Math.max(0, waterTankLevel - 0.5);
+            } else if (sprayingActive) {
+                waterTankLevel = Math.max(0, waterTankLevel - 0.2);
+            }
+            
+            document.getElementById('waterTankValue').textContent = waterTankLevel.toFixed(1);
+            const percent = (waterTankLevel / waterTankCapacity * 100).toFixed(0);
+            document.getElementById('waterTankBar').style.width = `${percent}%`;
+            
+            // Определение статуса уровня воды
+            let status = '';
+            let statusClass = '';
+            
+            if (waterTankLevel < 10) {
+                status = 'почти пусто';
+                statusClass = 'bg-red-100 text-red-800';
+            } else if (waterTankLevel < 30) {
+                status = 'мало воды';
+                statusClass = 'bg-yellow-100 text-yellow-800';
+            } else {
+                status = 'норма';
+                statusClass = 'bg-green-100 text-green-800';
+            }
+            
+            const waterStatus = document.getElementById('waterTankStatus');
+            waterStatus.textContent = status;
+            waterStatus.className = 'text-sm px-3 py-1 rounded-full ' + statusClass;
+        }
+
+        // Переключение света
+        function toggleLight() {
+            lightState = !lightState;
+            const lightBulb = document.getElementById('lightBulb');
+            
+            if (lightState) {
+                lightBulb.innerHTML = '<i class="fas fa-lightbulb text-yellow-300"></i>';
+                lightBulb.classList.add('light-on');
+                addLogMessage("Лампа включена");
+            } else {
+                lightBulb.innerHTML = '<i class="far fa-lightbulb text-gray-300"></i>';
+                lightBulb.classList.remove('light-on');
+                addLogMessage("Лампа выключена");
+            }
+        }
+
+        // Выбор полки для полива
+        function selectWateringShelf(shelf) {
+            selectedWateringShelf = shelf;
+            
+            // Сброс выделения всех полок
+            document.querySelectorAll('.watering-shelf-option').forEach(el => {
+                el.classList.remove('bg-blue-100');
+            });
+            
+            // Выделение выбранной полки
+            event.currentTarget.classList.add('bg-blue-100');
+            
+            addLogMessage(`Для полива выбрана полка: ${shelf === 'all' ? 'Все полки' : shelf}`);
+        }
+
+        // Запуск полива
+        function startWatering() {
+            if (wateringActive) return;
+            
+            if (waterTankLevel < 5) {
+                addLogMessage("Ошибка: Недостаточно воды в баке для полива");
+                return;
+            }
+            
+            wateringActive = true;
+            document.getElementById('wateringStatus').classList.remove('hidden');
+            document.getElementById('wateringStatusText').textContent = "Полив активен";
+            document.getElementById('wateringShelfInfo').textContent = selectedWateringShelf === 'all' ? '(Все полки)' : `(Полка ${selectedWateringShelf})`;
+            document.getElementById('startWatering').classList.add('bg-blue-600');
+            document.getElementById('startWatering').innerHTML = '<i class="fas fa-stop mr-2"></i>Остановить полив';
+            
+            addLogMessage(`Ручной полив запущен для ${selectedWateringShelf === 'all' ? 'всех полок' : 'полки ' + selectedWateringShelf}`);
+            
+            // Получаем выбранное время полива
+            const wateringTimeSelect = document.getElementById('wateringTimeSelect');
+            const selectedTime = wateringTimeSelect.value;
+            
+            if (selectedTime !== 'manual') {
+                const duration = parseInt(selectedTime);
+                
+                // Остановка через выбранное время
+                wateringTimeout = setTimeout(() => {
+                    if (wateringActive) {
+                        stopWatering();
+                    }
+                }, duration * 1000);
+            }
+        }
+
+        // Остановка полива
+        function stopWatering() {
+            wateringActive = false;
+            document.getElementById('wateringStatus').classList.add('hidden');
+            document.getElementById('startWatering').classList.remove('bg-blue-600');
+            document.getElementById('startWatering').innerHTML = '<i class="fas fa-shower mr-2"></i>Запустить полив';
+            
+            if (wateringTimeout) {
+                clearTimeout(wateringTimeout);
+                wateringTimeout = null;
+            }
+            
+            addLogMessage("Полив остановлен");
+        }
+
+        // Запуск орошения
+        function startSpraying() {
+            if (sprayingActive) return;
+            
+            if (waterTankLevel < 2) {
+                addLogMessage("Ошибка: Недостаточно воды в баке для орошения");
+                return;
+            }
+            
+            sprayingActive = true;
+            document.getElementById('wateringStatus').classList.remove('hidden');
+            document.getElementById('wateringStatusText').textContent = "Орошение активно";
+            document.getElementById('wateringShelfInfo').textContent = selectedWateringShelf === 'all' ? '(Все полки)' : `(Полка ${selectedWateringShelf})`;
+            document.getElementById('startSpraying').classList.add('bg-green-600');
+            document.getElementById('startSpraying').innerHTML = '<i class="fas fa-stop mr-2"></i>Остановить орошение';
+            
+            addLogMessage(`Орошение запущено для ${selectedWateringShelf === 'all' ? 'всех полок' : 'полки ' + selectedWateringShelf}`);
+            
+            // Получаем выбранное время орошения
+            const wateringTimeSelect = document.getElementById('wateringTimeSelect');
+            const selectedTime = wateringTimeSelect.value;
+            
+            if (selectedTime !== 'manual') {
+                const duration = parseInt(selectedTime);
+                
+                // Остановка через выбранное время
+                wateringTimeout = setTimeout(() => {
+                    if (sprayingActive) {
+                        stopSpraying();
+                    }
+                }, duration * 1000);
+            }
+        }
+
+        // Остановка орошения
+        function stopSpraying() {
+            sprayingActive = false;
+            document.getElementById('wateringStatus').classList.add('hidden');
+            document.getElementById('startSpraying').classList.remove('bg-green-600');
+            document.getElementById('startSpraying').innerHTML = '<i class="fas fa-spray-can mr-2"></i>Запустить орошение';
+            
+            if (wateringTimeout) {
+                clearTimeout(wateringTimeout);
+                wateringTimeout = null;
+            }
+            
+            addLogMessage("Орошение остановлено");
+        }
+
+        // Запуск таймера полива
+        function startWateringTimer() {
+            const interval = parseInt(document.getElementById('wateringInterval').value);
+            const duration = parseInt(document.getElementById('wateringDuration').value);
+            
+            if (isNaN(interval) || isNaN(duration) || interval < 1 || duration < 1) {
+                addLogMessage("Ошибка: Некорректные параметры таймера");
+                return;
+            }
+            
+            // Остановка предыдущего таймера
+            if (wateringTimer) {
+                clearInterval(wateringTimer);
+            }
+            
+            const now = new Date();
+            const nextWatering = new Date(now.getTime() + interval * 60 * 60 * 1000);
+            nextWateringTime = nextWatering;
+            
+            document.getElementById('nextWatering').textContent = nextWatering.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            
+            // Имитация работы таймера
+            wateringTimer = setInterval(() => {
+                const now = new Date();
+                const diff = nextWateringTime - now;
+                
+                if (diff <= 0) {
+                    // Время полива
+                    if (waterTankLevel > 5) {
+                        addLogMessage(`Автоматический полив запущен на ${duration} минут`);
+                        
+                        // Имитация полива
+                        startWatering();
+                        setTimeout(() => {
+                            if (wateringActive) {
+                                stopWatering();
+                            }
+                        }, duration * 60000);
+                    } else {
+                        addLogMessage("Автоматический полив отменен: недостаточно воды в баке");
+                    }
+                    
+                    // Установка следующего времени полива
+                    nextWateringTime = new Date(now.getTime() + interval * 60 * 60 * 1000);
+                    document.getElementById('nextWatering').textContent = nextWateringTime.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                }
+            }, 1000);
+            
+            addLogMessage(`Таймер полива установлен: каждые ${interval} часов, длительность ${duration} минут`);
+        }
+
+        // Выбор растения
+        function selectPlant(plant) {
+            selectedPlant = plant;
+            
+            // Сброс выделения всех растений
+            document.querySelectorAll('.plant-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Выделение выбранного растения
+            event.currentTarget.classList.add('selected');
+            
+            // Показ выбора полки
+            document.getElementById('shelfSelection').classList.remove('hidden');
+            
+            // Показ выбора стадии роста
+            document.getElementById('growthSelection').classList.remove('hidden');
+            
+            // Если выбрано "Другое", показываем форму для настройки
+            if (plant === 'other') {
+                document.getElementById('customPlantForm').classList.add('active');
+            } else {
+                document.getElementById('customPlantForm').classList.remove('active');
+            }
+            
+            addLogMessage(`Выбрано растение: ${plants[plant].name}`);
+        }
+
+        // Выбор полки
+        function selectShelf(shelf) {
+            selectedShelf = shelf;
+            
+            // Сброс выделения всех полок
+            document.querySelectorAll('.shelf-option').forEach(el => {
+                el.classList.remove('selected', 'bg-blue-50');
+            });
+            
+            // Выделение выбранной полки
+            event.currentTarget.classList.add('selected');
+            
+            addLogMessage(`Выбрана полка: ${shelf === 'all' ? 'Все полки' : shelf}`);
+        }
+
+        // Выбор стадии роста
+        function selectGrowth(growth) {
+            selectedGrowth = growth;
+            
+            // Сброс выделения всех стадий
+            document.querySelectorAll('.growth-option').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Выделение выбранной стадии
+            event.currentTarget.classList.add('selected');
+            
+            // Показ информации о растении
+            updatePlantInfo();
+            
+            addLogMessage(`Выбрана стадия роста: ${getGrowthName(growth)}`);
+        }
+
+        // Получение названия стадии роста
+        function getGrowthName(growth) {
+            const names = {
+                seedling: "Рассада",
+                vegetative: "Вегетация",
+                fruiting: "Плодоношение"
+            };
+            return names[growth] || growth;
+        }
+
+        // Обновление информации о растении
+        function updatePlantInfo() {
+            if (!selectedPlant || !selectedShelf || !selectedGrowth) return;
+            
+            const plantInfo = plants[selectedPlant][selectedGrowth];
+            
+            // Если выбраны все полки, добавляем растение на все пустые полки
+            if (selectedShelf === 'all') {
+                for (const shelf in shelves) {
+                    if (!shelves[shelf]) {
+                        shelves[shelf] = {
+                            plant: selectedPlant,
+                            growth: selectedGrowth,
+                            name: plants[selectedPlant].name
+                        };
+                    }
+                }
+            } else {
+                // Иначе добавляем только на выбранную полку
+                shelves[selectedShelf] = {
+                    plant: selectedPlant,
+                    growth: selectedGrowth,
+                    name: plants[selectedPlant].name
+                };
+            }
+            
+            // Показываем информацию о растении
+            document.getElementById('selectedPlantInfo').classList.remove('hidden');
+            document.getElementById('selectedPlantName').textContent = plants[selectedPlant].name;
+            document.getElementById('selectedShelf').textContent = selectedShelf === 'all' ? 'Все полки' : selectedShelf;
+            document.getElementById('selectedGrowth').textContent = getGrowthName(selectedGrowth);
+            document.getElementById('plantTemp').textContent = plantInfo.temp;
+            document.getElementById('plantWatering').textContent = plantInfo.watering;
+            document.getElementById('plantLight').textContent = plantInfo.light;
+            
+            // Генерируем время следующего полива
+            const now = new Date();
+            const nextWatering = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 дня
+            document.getElementById('plantNextWatering').textContent = `Завтра ${nextWatering.getHours()}:00`;
+            
+            document.getElementById('plantAdvice').textContent = plantInfo.advice;
+            
+            // Обновляем информацию по полкам в шапке
+            updateShelvesHeaderInfo();
+        }
+
+        // Обновление информации о полках в шапке
+        function updateShelvesHeaderInfo() {
+            for (const shelf in shelves) {
+                const shelfElement = document.getElementById(`shelf${shelf}Info`);
+                
+                if (shelves[shelf]) {
+                    const plant = shelves[shelf];
+                    const plantInfo = plants[plant.plant][plant.growth];
+                    
+                    shelfElement.innerHTML = `
+                        <p class="text-white font-medium">${plant.name}</p>
+                        <p class="text-white text-opacity-80">${getGrowthName(plant.growth)}</p>
+                        <p class="text-white text-opacity-80 text-xs mt-1">
+                            <i class="fas fa-temperature-high mr-1"></i>${plantInfo.temp}
+                        </p>
+                    `;
+                } else {
+                    shelfElement.innerHTML = `<p class="text-white text-opacity-80">Нет растения</p>`;
+                }
+            }
+        }
+
+        // Сохранение пользовательского растения
+        function saveCustomPlant() {
+            const name = document.getElementById('customPlantName').value.trim();
+            const temp = document.getElementById('customPlantTemp').value.trim();
+            const watering = document.getElementById('customPlantWatering').value.trim();
+            const light = document.getElementById('customPlantLight').value.trim();
+            
+            if (!name || !temp || !watering || !light) {
+                addLogMessage("Ошибка: Заполните все поля для сохранения растения");
+                return;
+            }
+            
+            // Генерируем уникальный ID для растения
+            const plantId = 'custom_' + Date.now().toString(36);
+            
+            // Сохраняем растение
+            customPlants[plantId] = {
+                name: name,
+                seedling: {
+                    temp: temp + '°C',
+                    watering: 'Каждые ' + watering + ' дня',
+                    light: light + ' часов',
+                    advice: 'Пользовательские настройки для ' + name
+                },
+                vegetative: {
+                    temp: temp + '°C',
+                    watering: 'Каждые ' + watering + ' дня',
+                    light: light + ' часов',
+                    advice: 'Пользовательские настройки для ' + name
+                },
+                fruiting: {
+                    temp: temp + '°C',
+                    watering: 'Каждые ' + watering + ' дня',
+                    light: light + ' часов',
+                    advice: 'Пользовательские настройки для ' + name
+                }
+            };
+            
+            // Устанавливаем выбранное растение
+            selectedPlant = plantId;
+            
+            // Обновляем информацию
+            updatePlantInfo();
+            
+            addLogMessage(`Сохранено пользовательское растение: ${name}`);
+        }
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            
+            // Обработчики событий
+            document.getElementById('connectBtn').addEventListener('click', connectToESP);
+            document.getElementById('disconnectBtn').addEventListener('click', disconnectFromESP);
+            document.getElementById('toggleLight').addEventListener('click', toggleLight);
+            document.getElementById('startWateringTimer').addEventListener('click', startWateringTimer);
+            
+            // Обработчики для ручного полива/орошения
+            document.getElementById('startWatering').addEventListener('click', function() {
+                if (wateringActive) {
+                    stopWatering();
+                } else {
+                    startWatering();
+                }
+            });
+            
+            document.getElementById('startSpraying').addEventListener('click', function() {
+                if (sprayingActive) {
+                    stopSpraying();
+                } else {
+                    startSpraying();
+                }
+            });
+            
+            // Обработчики выбора растений
+            document.querySelectorAll('.plant-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    selectPlant(this.getAttribute('data-plant'));
+                });
+            });
+            
+            // Обработчики выбора полки
+            document.querySelectorAll('.shelf-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    selectShelf(this.getAttribute('data-shelf'));
+                });
+            });
+            
+            // Обработчики выбора стадии роста
+            document.querySelectorAll('.growth-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    selectGrowth(this.getAttribute('data-growth'));
+                });
+            });
+            
+            // Обработчики выбора полки для полива
+            document.querySelectorAll('.watering-shelf-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    selectWateringShelf(this.getAttribute('data-shelf'));
+                });
+            });
+            
+            // Обработчик сохранения пользовательского растения
+            document.getElementById('saveCustomPlant').addEventListener('click', saveCustomPlant);
+            
+            // Имитация первоначального состояния
+            updateTime();
+            updateSoilMoisture();
+            updateWaterTank();
+            updateShelvesHeaderInfo();
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=ZloyVid/teplica" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
