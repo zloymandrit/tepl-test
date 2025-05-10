@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Умная теплица</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #38b2ac;
+            --primary-dark: #2c7a7b;
+            --secondary: #667eea;
+            --danger: #e53e3e;
+            --warning: #dd6b20;
+            --success: #38a169;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: #f8fafc;
+            color: #1a202c;
+        }
+        
+        .dashboard-card {
+            transition: all 0.2s ease;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .sensor-value {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+        }
+        
+        .nav-link {
+            transition: all 0.2s;
+            border-radius: 8px;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(56, 178, 172, 0.1);
+        }
+        
+        .nav-link.active {
+            background-color: rgba(56, 178, 172, 0.2);
+            color: var(--primary-dark);
+        }
+        
+        .plant-option {
+            transition: all 0.2s ease;
+            border-radius: 10px;
+        }
+        
+        .plant-option:hover {
+            transform: scale(1.03);
+        }
+        
+        .plant-option.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.2);
+        }
+        
+        .light-on {
+            box-shadow: 0 0 20px 5px rgba(255, 215, 0, 0.3);
+        }
+        
+        .connection-status {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .connected {
+            animation: none;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #edf2f7;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .watering-active {
+            animation: wateringPulse 1.5s infinite;
+        }
+        
+        @keyframes wateringPulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+        
+        .custom-plant-form {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .custom-plant-form.active {
+            max-height: 500px;
+            transition: max-height 0.5s ease-in;
+        }
+        
+        .shelf-light-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .light-on-indicator {
+            background-color: #f6e05e;
+            box-shadow: 0 0 5px 2px rgba(245, 158, 11, 0.3);
+        }
+        
+        .light-off-indicator {
+            background-color: #cbd5e0;
+        }
+        
+        .chart-container {
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a67d8;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .btn-warning:hover {
+            background-color: #c05621;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+            transition: all 0.2s;
+        }
+        
+        .btn-success:hover {
+            background-color: #2f855a;
+        }
+        
+        .input-field {
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+        
+        .input-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.2);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .sidebar {
+            width: 280px;
+            transition: all 0.3s;
+        }
+        
+        .main-content {
+            margin-left: 280px;
+            transition: all 0.3s;
+        }
+        
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                position: fixed;
+                z-index: 50;
+                height: 100vh;
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Мобильное меню -->
+    <div class="lg:hidden fixed top-0 left-0 right-0 bg-white shadow-md z-40 p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-gray-800">Умная теплица</h1>
+        <button id="mobileMenuBtn" class="text-gray-600">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+    </div>
+    
+    <!-- Боковая панель -->
+    <div id="sidebar" class="sidebar bg-white shadow-md fixed top-0 left-0 bottom-0">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-leaf text-green-500 mr-3"></i>
+                Умная теплица
+            </h1>
+            <p class="text-gray-600 text-sm mt-1">Контроль и управление</p>
+        </div>
+        
+        <div class="p-4">
+            <div id="connectionStatus" class="connection-status flex items-center bg-red-500 text-white px-3 py-2 rounded-lg mb-6">
+                <i class="fas fa-plug mr-2"></i>
+                <span>Нет соединения</span>
+            </div>
+            
+            <nav class="space-y-1">
+                <a href="#" class="nav-link active flex items-center px-4 py-3 text-gray-700">
+                    <i class="fas fa-tachometer-alt mr-3 text-gray-500"></i>
+                    Панель управления
+                </a>
+                <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700">
+                    <i class="fas fa-chart-line mr-3 text-gray-500"></i>
+                    Графики
+                </a>
+                <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700">
+                    <i class="fas fa-water mr-3 text-gray-500"></i>
+                    Полив
+                </a>
+                <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700">
+                    <i class="fas fa-lightbulb mr-3 text-gray-500"></i>
+                    Освещение
+                </a>
+                <a href="#" class="nav-link flex items-center px-4 py-3 text-gray-700">
+                    <i class="fas fa-cog mr-3 text-gray-500"></i>
+                    Настройки
+                </a>
+            </nav>
+        </div>
+        
+        <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+            <div class="flex items-center">
+                <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
+                    <i class="fas fa-user text-gray-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-700">Администратор</p>
+                    <p class="text-xs text-gray-500">admin@example.com</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Основное содержимое -->
+    <div class="main-content pt-6 pb-16">
+        <div class="container mx-auto px-4">
+            <!-- Заголовок и быстрый обзор -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">Панель управления</h2>
+                    <p class="text-gray-600">Обзор состояния теплицы</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <div class="flex items-center bg-white rounded-lg shadow-sm px-4 py-2">
+                        <i class="fas fa-calendar-alt text-gray-500 mr-2"></i>
+                        <span id="currentDate" class="text-gray-700">-- --- ----</span>
+                        <span class="mx-2 text-gray-300">|</span>
+                        <i class="fas fa-clock text-gray-500 mr-2"></i>
+                        <span id="currentTime" class="text-gray-700">--:--:--</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Карточки состояния -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Температура -->
+                <div class="dashboard-card bg-white p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-1">Температура</h3>
+                            <div class="flex items-end">
+                                <span id="temperatureValue" class="sensor-value text-3xl font-bold text-gray-800">--</span>
+                                <span class="text-xl text-gray-500 ml-1 mb-1">°C</span>
+                            </div>
+                        </div>
+                        <div class="bg-blue-100 text-blue-800 status-badge">
+                            <span id="tempStatus">нет данных</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center text-sm text-gray-500">
+                        <i class="fas fa-thermometer-half mr-2"></i>
+                        <span>Текущее значение</span>
+                    </div>
+                </div>
+                
+                <!-- Влажность почвы -->
+                <div class="dashboard-card bg-white p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-1">Влажность почвы</h3>
+                            <div class="flex items-end">
+                                <span id="soilMoistureValue" class="sensor-value text-3xl font-bold text-gray-800">--</span>
+                                <span class="text-xl text-gray-500 ml-1 mb-1">%</span>
+                            </div>
+                        </div>
+                        <div class="bg-green-100 text-green-800 status-badge">
+                            <span id="soilMoistureStatus">нет данных</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar mt-3">
+                        <div id="soilMoistureBar" class="progress-fill bg-green-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Уровень воды -->
+                <div class="dashboard-card bg-white p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-1">Уровень воды</h3>
+                            <div class="flex items-end">
+                                <span id="waterTankValue" class="sensor-value text-3xl font-bold text-gray-800">--</span>
+                                <span class="text-xl text-gray-500 ml-1 mb-1">л</span>
+                            </div>
+                        </div>
+                        <div class="bg-blue-100 text-blue-800 status-badge">
+                            <span id="waterTankStatus">нет данных</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar mt-3">
+                        <div id="waterTankBar" class="progress-fill bg-blue-400" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <!-- Освещение -->
+                <div class="dashboard-card bg-white p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-1">Освещение</h3>
+                            <div class="flex items-center">
+                                <span id="lightBulb" class="text-4xl mr-3">
+                                    <i class="far fa-lightbulb text-gray-300"></i>
+                                </span>
+                                <span id="lightStatus" class="text-gray-600">Выключено</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="toggleLight" class="w-full btn-primary px-4 py-2 rounded-lg">
+                        <i class="fas fa-power-off mr-2"></i>Включить
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Полки с растениями -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-800">Полки с растениями</h2>
+                    <button class="text-sm text-blue-500 hover:text-blue-700 flex items-center">
+                        <i class="fas fa-plus mr-1"></i> Добавить растение
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Полка 1 -->
+                    <div class="dashboard-card bg-white p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-gray-800 flex items-center">
+                                <i class="fas fa-layer-group text-blue-500 mr-2"></i>
+                                Полка 1
+                            </h3>
+                            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">Не занята</span>
+                        </div>
+                        
+                        <div id="shelf1Info" class="space-y-3">
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <i class="fas fa-question text-2xl text-gray-400 mr-3"></i>
+                                <span class="text-gray-700">Нет растения</span>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Влажность:</span>
+                                    <span class="font-medium">--%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-gray-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm text-gray-600">Свет:</span>
+                                <span class="flex items-center text-sm">
+                                    <span class="shelf-light-indicator light-off-indicator"></span>
+                                    Выкл
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Полка 2 -->
+                    <div class="dashboard-card bg-white p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-gray-800 flex items-center">
+                                <i class="fas fa-layer-group text-green-500 mr-2"></i>
+                                Полка 2
+                            </h3>
+                            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">Не занята</span>
+                        </div>
+                        
+                        <div id="shelf2Info" class="space-y-3">
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <i class="fas fa-question text-2xl text-gray-400 mr-3"></i>
+                                <span class="text-gray-700">Нет растения</span>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Влажность:</span>
+                                    <span class="font-medium">--%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-gray-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm text-gray-600">Свет:</span>
+                                <span class="flex items-center text-sm">
+                                    <span class="shelf-light-indicator light-off-indicator"></span>
+                                    Выкл
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Полка 3 -->
+                    <div class="dashboard-card bg-white p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-gray-800 flex items-center">
+                                <i class="fas fa-layer-group text-yellow-500 mr-2"></i>
+                                Полка 3
+                            </h3>
+                            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">Не занята</span>
+                        </div>
+                        
+                        <div id="shelf3Info" class="space-y-3">
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <i class="fas fa-question text-2xl text-gray-400 mr-3"></i>
+                                <span class="text-gray-700">Нет растения</span>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Влажность:</span>
+                                    <span class="font-medium">--%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-gray-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm text-gray-600">Свет:</span>
+                                <span class="flex items-center text-sm">
+                                    <span class="shelf-light-indicator light-off-indicator"></span>
+                                    Выкл
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Полка 4 -->
+                    <div class="dashboard-card bg-white p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-medium text-gray-800 flex items-center">
+                                <i class="fas fa-layer-group text-red-500 mr-2"></i>
+                                Полка 4
+                            </h3>
+                            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">Не занята</span>
+                        </div>
+                        
+                        <div id="shelf4Info" class="space-y-3">
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                                <i class="fas fa-question text-2xl text-gray-400 mr-3"></i>
+                                <span class="text-gray-700">Нет растения</span>
+                            </div>
+                            
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Влажность:</span>
+                                    <span class="font-medium">--%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-gray-300" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                <span class="text-sm text-gray-600">Свет:</span>
+                                <span class="flex items-center text-sm">
+                                    <span class="shelf-light-indicator light-off-indicator"></span>
+                                    Выкл
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- График и управление -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- График температуры и влажности -->
+                <div class="dashboard-card bg-white p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">График температуры и влажности</h2>
+                    <div class="chart-container">
+                        <canvas id="tempChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Управление поливом -->
+                <div class="dashboard-card bg-white p-6">
+                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Управление поливом</h2>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Выберите полку:</label>
+                        <div class="flex flex-wrap gap-2">
+                            <button data-shelf="all" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm hover:bg-blue-200 transition">Все</button>
+                            <button data-shelf="1" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition">Полка 1</button>
+                            <button data-shelf="2" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition">Полка 2</button>
+                            <button data-shelf="3" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition">Полка 3</button>
+                            <button data-shelf="4" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-gray-200 transition">Полка 4</button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Время полива:</label>
+                        <select id="wateringTimeSelect" class="w-full input-field p-2">
+                            <option value="manual">Ручное управление</option>
+                            <option value="30">30 секунд</option>
+                            <option value="60">1 минута</option>
+                            <option value="300">5 минут</option>
+                            <option value="600">10 минут</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="startWatering" class="btn-primary px-4 py-2 rounded-lg">
+                            <i class="fas fa-shower mr-2"></i>Полив
+                        </button>
+                        <button id="startSpraying" class="btn-secondary px-4 py-2 rounded-lg">
+                            <i class="fas fa-spray-can mr-2"></i>Орошение
+                        </button>
+                    </div>
+                    
+                    <div id="wateringStatus" class="hidden mt-4 p-3 bg-blue-50 text-blue-700 rounded-lg text-sm flex items-start">
+                        <i class="fas fa-info-circle mt-0.5 mr-2"></i>
+                        <div>
+                            <span id="wateringStatusText"></span>
+                            <span id="wateringShelfInfo"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Журнал событий -->
+            <div class="dashboard-card bg-white p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Журнал событий</h2>
+                <div id="eventLog" class="h-40 overflow-y-auto bg-gray-50 p-3 rounded-lg font-mono text-sm space-y-2"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Подключение к ESP32 (модальное окно) -->
+    <div id="connectionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">Подключение к ESP32</h3>
+                    <button id="closeConnectionModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">IP адрес ESP32:</label>
+                    <input id="espIp" type="text" placeholder="192.168.1.100" class="w-full input-field p-2">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="connectBtn" class="btn-success px-4 py-2 rounded-lg">
+                        <i class="fas fa-plug mr-2"></i>Подключиться
+                    </button>
+                    <button id="disconnectBtn" class="btn-danger px-4 py-2 rounded-lg hidden">
+                        <i class="fas fa-plug mr-2"></i>Отключиться
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Кнопка подключения (плавающая) -->
+    <button id="openConnectionModal" class="fixed bottom-6 right-6 bg-blue-500 text-white rounded-full p-4 shadow-lg hover:bg-blue-600 transition z-40">
+        <i class="fas fa-plug text-xl"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Мобильное меню
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            
+            mobileMenuBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+            });
+            
+            // Модальное окно подключения
+            const connectionModal = document.getElementById('connectionModal');
+            const openConnectionModal = document.getElementById('openConnectionModal');
+            const closeConnectionModal = document.getElementById('closeConnectionModal');
+            
+            openConnectionModal.addEventListener('click', function() {
+                connectionModal.classList.remove('hidden');
+            });
+            
+            closeConnectionModal.addEventListener('click', function() {
+                connectionModal.classList.add('hidden');
+            });
+            
+            // Инициализация графика
+            const ctx = document.getElementById('tempChart').getContext('2d');
+            const tempChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(24).fill().map((_, i) => `${i}:00`),
+                    datasets: [
+                        {
+                            label: 'Температура (°C)',
+                            data: Array(24).fill(null),
+                            borderColor: 'rgb(56, 178, 172)',
+                            backgroundColor: 'rgba(56, 178, 172, 0.1)',
+                            tension: 0.1,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Влажность почвы (%)',
+                            data: Array(24).fill(null),
+                            borderColor: 'rgb(102, 126, 234)',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            tension: 0.1,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Температура (°C)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                            title: {
+                                display: true,
+                                text: 'Влажность почвы (%)'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Обновление времени
+            function updateTime() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                const dateStr = now.toLocaleDateString('ru-RU', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                });
+                
+                document.getElementById('currentTime').textContent = timeStr;
+                document.getElementById('currentDate').textContent = dateStr;
+            }
+            
+            setInterval(updateTime, 1000);
+            updateTime();
+            
+            // Имитация данных (для демонстрации)
+            function simulateData() {
+                // Температура
+                const temp = (22 + Math.random() * 6 - 3).toFixed(1);
+                document.getElementById('temperatureValue').textContent = temp;
+                
+                // Влажность почвы
+                const moisture = (50 + Math.random() * 30 - 15).toFixed(0);
+                document.getElementById('soilMoistureValue').textContent = moisture;
+                document.getElementById('soilMoistureBar').style.width = `${moisture}%`;
+                
+                // Уровень воды
+                const waterLevel = (40 + Math.random() * 30 - 15).toFixed(1);
+                document.getElementById('waterTankValue').textContent = waterLevel;
+                document.getElementById('waterTankBar').style.width = `${waterLevel}%`;
+                
+                // Обновление графика
+                const hour = new Date().getHours();
+                tempChart.data.datasets[0].data[hour] = temp;
+                tempChart.data.datasets[1].data[hour] = moisture;
+                tempChart.update();
+            }
+            
+            setInterval(simulateData, 5000);
+            simulateData();
+            
+            // Переключение света
+            const toggleLight = document.getElementById('toggleLight');
+            const lightBulb = document.getElementById('lightBulb');
+            const lightStatus = document.getElementById('lightStatus');
+            let lightState = false;
+            
+            toggleLight.addEventListener('click', function() {
+                lightState = !lightState;
+                
+                if (lightState) {
+                    lightBulb.innerHTML = '<i class="fas fa-lightbulb text-yellow-300 light-on"></i>';
+                    lightStatus.textContent = 'Включено';
+                    toggleLight.innerHTML = '<i class="fas fa-power-off mr-2"></i>Выключить';
+                    toggleLight.classList.add('btn-danger');
+                    toggleLight.classList.remove('btn-primary');
+                } else {
+                    lightBulb.innerHTML = '<i class="far fa-lightbulb text-gray-300"></i>';
+                    lightStatus.textContent = 'Выключено';
+                    toggleLight.innerHTML = '<i class="fas fa-power-off mr-2"></i>Включить';
+                    toggleLight.classList.add('btn-primary');
+                    toggleLight.classList.remove('btn-danger');
+                }
+            });
+            
+            // Управление поливом
+            const startWatering = document.getElementById('startWatering');
+            const startSpraying = document.getElementById('startSpraying');
+            const wateringStatus = document.getElementById('wateringStatus');
+            let wateringActive = false;
+            let sprayingActive = false;
+            
+            startWatering.addEventListener('click', function() {
+                wateringActive = !wateringActive;
+                
+                if (wateringActive) {
+                    wateringStatus.classList.remove('hidden');
+                    document.getElementById('wateringStatusText').textContent = "Полив активен";
+                    startWatering.innerHTML = '<i class="fas fa-stop mr-2"></i>Остановить';
+                    startWatering.classList.add('btn-danger');
+                    startWatering.classList.remove('btn-primary');
+                } else {
+                    wateringStatus.classList.add('hidden');
+                    startWatering.innerHTML = '<i class="fas fa-shower mr-2"></i>Полив';
+                    startWatering.classList.add('btn-primary');
+                    startWatering.classList.remove('btn-danger');
+                }
+            });
+            
+            startSpraying.addEventListener('click', function() {
+                sprayingActive = !sprayingActive;
+                
+                if (sprayingActive) {
+                    wateringStatus.classList.remove('hidden');
+                    document.getElementById('wateringStatusText').textContent = "Орошение активно";
+                    startSpraying.innerHTML = '<i class="fas fa-stop mr-2"></i>Остановить';
+                    startSpraying.classList.add('btn-danger');
+                    startSpraying.classList.remove('btn-secondary');
+                } else {
+                    wateringStatus.classList.add('hidden');
+                    startSpraying.innerHTML = '<i class="fas fa-spray-can mr-2"></i>Орошение';
+                    startSpraying.classList.add('btn-secondary');
+                    startSpraying.classList.remove('btn-danger');
+                }
+            });
+            
+            // Выбор полки для полива
+            document.querySelectorAll('[data-shelf]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('[data-shelf]').forEach(b => {
+                        b.classList.remove('bg-blue-100', 'text-blue-700');
+                        b.classList.add('bg-gray-100', 'text-gray-700');
+                    });
+                    
+                    this.classList.remove('bg-gray-100', 'text-gray-700');
+                    this.classList.add('bg-blue-100', 'text-blue-700');
+                    
+                    document.getElementById('wateringShelfInfo').textContent = 
+                        this.getAttribute('data-shelf') === 'all' ? '(Все полки)' : `(Полка ${this.getAttribute('data-shelf')})`;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
